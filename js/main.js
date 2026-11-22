@@ -129,7 +129,7 @@ class Display {
   poke() {
     this.root.classList.remove('idle');
     clearTimeout(this.idleT);
-    this.idleT = setTimeout(() => this.root.classList.add('idle'), 2500);
+    this.idleT = setTimeout(() => this.root.classList.add('idle'), (matchMedia('(pointer: coarse)').matches ? 6000 : 2500));
   }
 
   refreshPlay() {

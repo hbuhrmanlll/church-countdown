@@ -222,6 +222,8 @@ export class Editor {
       try { localStorage.setItem('kairos.previewCollapsed', v ? '1' : '0'); } catch { /* ignore */ }
     };
     $('collapseBtn').onclick = () => setCollapsed(!prev.classList.contains('collapsed'));
+    $('miniBtn').onclick = (e) => { e.stopPropagation(); setCollapsed(true); };
+    $('miniBtn').onpointerdown = (e) => e.stopPropagation();
     try { if (localStorage.getItem('kairos.previewCollapsed') === '1') setCollapsed(true); } catch { /* ignore */ }
 
     document.addEventListener('keydown', (e) => {
