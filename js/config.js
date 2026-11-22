@@ -2,7 +2,7 @@
 // Everything that comes from a link is treated as untrusted and rebuilt from
 // known-good values. Nothing from a link is ever inserted as HTML.
 
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.1.0';
 
 export const FONTS = {
   outfit: { name: 'Outfit', css: "'Outfit', system-ui, sans-serif", weights: [300, 400, 500, 600, 700, 800] },
@@ -28,6 +28,14 @@ export const SCENE_LIST = [
   { id: 'nightsky', name: 'Night sky', feel: 'Medium' },
   { id: 'glass', name: 'Stained glass', feel: 'Bold' },
   { id: 'halo', name: 'Halo rings', feel: 'Bold' },
+  { id: 'lightspeed', name: 'Lightspeed', feel: 'Epic' },
+  { id: 'arena', name: 'Arena lights', feel: 'Epic' },
+  { id: 'glory', name: 'Glory rays', feel: 'Epic' },
+  { id: 'clouds', name: 'Glory clouds', feel: 'Epic' },
+  { id: 'tunnel', name: 'Light tunnel', feel: 'Epic' },
+  { id: 'heartbeat', name: 'Heartbeat', feel: 'Epic' },
+  { id: 'galaxy', name: 'Galaxy', feel: 'Epic' },
+  { id: 'fireworks', name: 'Fireworks', feel: 'Epic' },
   { id: 'none', name: 'No animation', feel: 'Still' },
 ];
 
@@ -40,6 +48,8 @@ export const PALETTES = [
   { id: 'ocean', name: 'Ocean', base: '#03141f', c1: '#0f8ea8', c2: '#6fe3d6', c3: '#2a4fb8' },
   { id: 'ember', name: 'Fire', base: '#120604', c1: '#e2531f', c2: '#ffb03a', c3: '#8a1c12' },
   { id: 'forest', name: 'Forest', base: '#08130b', c1: '#3f8f4f', c2: '#c7e27a', c3: '#1d5c56' },
+  { id: 'neon', name: 'Neon', base: '#07051a', c1: '#7a3cff', c2: '#22e1ff', c3: '#ff2fb4' },
+  { id: 'royal', name: 'Royal', base: '#050a24', c1: '#2b55ff', c2: '#ffd36b', c3: '#8fb1ff' },
   { id: 'mono', name: 'Silver', base: '#0d0f12', c1: '#5d6673', c2: '#e9edf2', c3: '#9aa4b1' },
 ];
 
@@ -143,6 +153,7 @@ export function defaultConfig() {
       speed: 1,
       amount: 60,
       dim: 10,
+      build: true,
     },
     end: { chime: false, volume: 60 },
   };
@@ -261,6 +272,7 @@ export function sanitize(input) {
       speed: num(bg.speed, 1, 0.2, 3),
       amount: num(bg.amount, 60, 0, 100),
       dim: num(bg.dim, 10, 0, 85),
+      build: bool(bg.build, true),
     },
     end: {
       chime: bool(end.chime, false),

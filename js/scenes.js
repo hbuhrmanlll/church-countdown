@@ -504,6 +504,436 @@ scenes.halo = {
   },
 };
 
+// ================================================================ EPIC scenes
+// Big, bold shapes with strong motion. Kept to large glowing forms (not tiny
+// noise) so they still look good after livestream video compression.
+// `s.urg` (0..1) rises in the final minute so the scene builds toward zero.
+
+const fade = (ctx, w, h, p, a) => {
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = rgba(p.base, a);
+  ctx.fillRect(0, 0, w, h);
+};
+
+scenes.lightspeed = {
+  scale: 0.6,
+  init(s) {
+    const r = rng(101);
+    s.r = r;
+    s.n = Math.round(160 + s.amt * 420);
+    s.stars = Array.from({ length: s.n }, () => this.spawn(r, true));
+    s.cols = [s.p.c1, s.p.c2, s.p.c3, [255, 255, 255]];
+    s.fresh = true;
+  },
+  spawn(r, anywhere) {
+    return { a: r() * TAU, z: anywhere ? 0.05 + r() * 1 : 1, k: Math.floor(r() * 4), v: 0.25 + r() * 0.5 };
+  },
+  draw(ctx, w, h, t, s, dt) {
+    if (s.fresh || !dt) { baseFill(ctx, w, h, s.p, 0); s.fresh = false; }
+    fade(ctx, w, h, s.p, 0.32);
+    const cx = w / 2 + Math.sin(t * 0.21) * w * 0.03, cy = h / 2 + Math.cos(t * 0.17) * h * 0.03;
+    const m = Math.max(w, h);
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, m * 0.45);
+    g.addColorStop(0, rgba(s.p.c2, 0.18 + 0.2 * s.urg));
+    g.addColorStop(0.4, rgba(s.p.c1, 0.08));
+    g.addColorStop(1, rgba(s.p.c1, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    const spd = 1 + s.urg * 2.5;
+    for (let i = 0; i < s.stars.length; i++) {
+      const st = s.stars[i];
+      const z0 = st.z;
+      st.z -= st.v * dt * 0.55 * spd;
+      if (st.z <= 0.02) { s.stars[i] = this.spawn(s.r, false); continue; }
+      const r0 = (0.06 / z0) * m * 0.5, r1 = (0.06 / st.z) * m * 0.5;
+      if (r0 > m) continue;
+      const x0 = cx + Math.cos(st.a) * r0, y0 = cy + Math.sin(st.a) * r0;
+      const x1 = cx + Math.cos(st.a) * r1, y1 = cy + Math.sin(st.a) * r1;
+      const near = 1 - st.z;
+      ctx.strokeStyle = rgba(s.cols[st.k], 0.25 + near * 0.75);
+      ctx.lineWidth = Math.max(1, near * near * m * 0.006);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1 + (x1 - x0) * 0.6, y1 + (y1 - y0) * 0.6);
+      ctx.stroke();
+    }
+  },
+};
+
+scenes.arena = {
+  scale: 0.45,
+  init(s) {
+    const r = rng(77);
+    const cols = [s.p.c1, s.p.c2, s.p.c3];
+    s.beams = [];
+    const n = 7;
+    for (let i = 0; i < n; i++) {
+      s.beams.push({ x: (i + 0.5) / n, y: 1.04, base: -Math.PI / 2, sw: 0.35 + r() * 0.25, f: 0.12 + r() * 0.18, ph: r() * TAU, c: cols[i % 3], wd: 0.05 + r() * 0.03 });
+    }
+    for (let i = 0; i < 4; i++) {
+      s.beams.push({ x: 0.12 + i * 0.25, y: -0.04, base: Math.PI / 2, sw: 0.5, f: 0.09 + r() * 0.1, ph: r() * TAU, c: cols[(i + 1) % 3], wd: 0.04 });
+    }
+    s.haze = Array.from({ length: 10 }, () => ({ x: r(), y: 0.3 + r() * 0.7, rad: 0.25 + r() * 0.3, sp: 0.01 + r() * 0.02 }));
+  },
+  draw(ctx, w, h, t, s, dt) {
+    baseFill(ctx, w, h, s.p, 0);
+    const m = Math.max(w, h);
+    ctx.globalCompositeOperation = 'lighter';
+    // haze
+    for (const hz of s.haze) {
+      hz.x += hz.sp * dt; if (hz.x > 1.3) hz.x = -0.3;
+      const g = ctx.createRadialGradient(hz.x * w, hz.y * h, 0, hz.x * w, hz.y * h, hz.rad * m);
+      g.addColorStop(0, rgba(s.p.c3, 0.05 + s.amt * 0.05));
+      g.addColorStop(1, rgba(s.p.c3, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    const len = m * 1.3;
+    const boost = 1 + s.urg * 1.5;
+    for (const b of s.beams) {
+      const a = b.base + Math.sin(t * b.f * TAU * boost + b.ph) * b.sw;
+      const ox = b.x * w, oy = b.y * h;
+      const alpha = (0.1 + s.amt * 0.22) * (0.75 + 0.25 * Math.sin(t * 1.3 + b.ph)) * (1 + s.urg * 0.6);
+      const ex1 = ox + Math.cos(a - b.wd) * len, ey1 = oy + Math.sin(a - b.wd) * len;
+      const ex2 = ox + Math.cos(a + b.wd) * len, ey2 = oy + Math.sin(a + b.wd) * len;
+      const g = ctx.createLinearGradient(ox, oy, ox + Math.cos(a) * len * 0.8, oy + Math.sin(a) * len * 0.8);
+      g.addColorStop(0, rgba(b.c, alpha * 2.2));
+      g.addColorStop(0.5, rgba(b.c, alpha * 0.7));
+      g.addColorStop(1, rgba(b.c, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      ctx.lineTo(ex1, ey1);
+      ctx.lineTo(ex2, ey2);
+      ctx.closePath();
+      ctx.fill();
+      // source flare
+      const fg = ctx.createRadialGradient(ox, oy, 0, ox, oy, m * 0.06);
+      fg.addColorStop(0, rgba([255, 255, 255], 0.5 * alpha * 4));
+      fg.addColorStop(0.3, rgba(b.c, 0.4 * alpha * 4));
+      fg.addColorStop(1, rgba(b.c, 0));
+      ctx.fillStyle = fg;
+      ctx.fillRect(ox - m * 0.06, oy - m * 0.06, m * 0.12, m * 0.12);
+    }
+  },
+};
+
+scenes.galaxy = {
+  scale: 0.7,
+  init(s) {
+    const r = rng(55);
+    const n = Math.round(1200 + s.amt * 2200);
+    s.pts = Array.from({ length: n }, () => {
+      const rad = Math.pow(r(), 0.7);
+      const arm = Math.floor(r() * 3);
+      return { rad, a: arm * (TAU / 3) + rad * 5.2 + (r() - 0.5) * (0.7 - rad * 0.4), z: r(), sz: 0.5 + r() * 1.5 };
+    });
+    s.bg = Array.from({ length: 120 }, () => ({ x: r(), y: r(), z: r() }));
+  },
+  draw(ctx, w, h, t, s) {
+    baseFill(ctx, w, h, s.p, 0.1);
+    const cx = w / 2, cy = h / 2, m = Math.min(w, h) * 0.62 * (w > h ? 1.25 : 1);
+    for (const b of s.bg) { ctx.fillStyle = rgba([255, 255, 255], 0.15 + b.z * 0.4); ctx.fillRect(b.x * w, b.y * h, 1.2, 1.2); }
+    ctx.globalCompositeOperation = 'lighter';
+    const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, m * 0.75);
+    core.addColorStop(0, rgba([255, 255, 255], 0.6 + s.urg * 0.3));
+    core.addColorStop(0.1, rgba(s.p.c2, 0.45));
+    core.addColorStop(0.45, rgba(s.p.c1, 0.16));
+    core.addColorStop(1, rgba(s.p.c1, 0));
+    ctx.fillStyle = core;
+    ctx.fillRect(0, 0, w, h);
+    const tilt = 0.5, rot = t * 0.06 * (1 + s.urg * 2);
+    const cr = Math.cos(-0.35), sr = Math.sin(-0.35);
+    for (const p of s.pts) {
+      const ang = p.a + rot / (0.25 + p.rad);
+      const x = Math.cos(ang) * p.rad * m, y = Math.sin(ang) * p.rad * m * tilt;
+      const X = cx + x * cr - y * sr, Y = cy + x * sr + y * cr;
+      const col = p.rad < 0.18 ? s.p.c2 : p.rad < 0.55 ? s.p.c1 : s.p.c3;
+      ctx.fillStyle = rgba(col, Math.min(1, (0.55 + p.z * 0.6) * (1.2 - p.rad * 0.5)));
+      const sz = p.sz * Math.max(1.4, m / 320);
+      ctx.fillRect(X, Y, sz, sz);
+    }
+  },
+};
+
+scenes.tunnel = {
+  scale: 0.55,
+  init(s) {
+    s.rings = Array.from({ length: 22 }, (_, i) => ({ z: (i + 1) / 22 }));
+    s.cols = [s.p.c1, s.p.c2, s.p.c3];
+    s.count = 0;
+  },
+  draw(ctx, w, h, t, s, dt) {
+    baseFill(ctx, w, h, s.p, 0);
+    const m = Math.max(w, h);
+    const spd = (0.12 + s.amt * 0.12) * (1 + s.urg * 2);
+    const cx = w / 2 + Math.sin(t * 0.35) * w * 0.08, cy = h / 2 + Math.cos(t * 0.27) * h * 0.08;
+    const vg = ctx.createRadialGradient(cx, cy, 0, cx, cy, m * 0.25);
+    vg.addColorStop(0, rgba(s.p.c2, 0.35));
+    vg.addColorStop(1, rgba(s.p.c2, 0));
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineJoin = 'round';
+    for (const r of s.rings) {
+      r.z -= spd * dt;
+      if (r.z <= 0.02) { r.z += 1; s.count++; r.k = s.count % 3; }
+    }
+    const sorted = [...s.rings].sort((a, b) => b.z - a.z);
+    for (const r of sorted) {
+      const size = (0.09 / r.z) * m * 0.5;
+      if (size > m * 2) continue;
+      // centre drifts with depth to feel like flying through a curve
+      const px = w / 2 + (cx - w / 2) * r.z * 1.6, py = h / 2 + (cy - h / 2) * r.z * 1.6;
+      const near = 1 - r.z;
+      const col = s.cols[(r.k ?? Math.round(r.z * 22)) % 3];
+      ctx.strokeStyle = rgba(col, Math.min(1, near * 1.1) * (0.5 + s.amt * 0.5));
+      ctx.lineWidth = Math.max(1, near * near * m * 0.012);
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(r.z * 2.2 + t * 0.15);
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6 * TAU;
+        const x = Math.cos(a) * size * 1.25, y = Math.sin(a) * size;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+  },
+};
+
+scenes.glory = {
+  scale: 0.4,
+  init(s) {
+    const r = rng(63);
+    s.rays = 18;
+    s.sparks = Array.from({ length: Math.round(30 + s.amt * 70) }, () => ({ a: r() * TAU, d: r(), v: 0.04 + r() * 0.08, z: r() }));
+    s.spr = sprite(s.p.c2, 32, 0.3);
+    s.r = r;
+  },
+  draw(ctx, w, h, t, s, dt) {
+    baseFill(ctx, w, h, s.p, 0);
+    const cx = w / 2, cy = h * 0.5, m = Math.hypot(w, h);
+    const rot = t * 0.05 * (1 + s.urg * 3);
+    const frac = (Date.now() % 1000) / 1000;
+    const beat = Math.exp(-frac * 4);
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < s.rays; i++) {
+      const a = rot + i / s.rays * TAU;
+      const wd = TAU / s.rays * 0.28;
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, m * 0.7);
+      const col = i % 2 ? s.p.c1 : s.p.c2;
+      g.addColorStop(0, rgba(col, (0.18 + s.amt * 0.25) * (0.85 + 0.15 * beat)));
+      g.addColorStop(1, rgba(col, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, m * 0.7, a - wd, a + wd);
+      ctx.closePath();
+      ctx.fill();
+    }
+    const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, m * 0.3);
+    core.addColorStop(0, rgba([255, 255, 255], 0.35 + 0.15 * beat + s.urg * 0.2));
+    core.addColorStop(0.25, rgba(s.p.c2, 0.25));
+    core.addColorStop(1, rgba(s.p.c2, 0));
+    ctx.fillStyle = core;
+    ctx.fillRect(0, 0, w, h);
+    const mm = Math.min(w, h);
+    for (const sp of s.sparks) {
+      sp.d += sp.v * dt * (1 + s.urg * 2);
+      if (sp.d > 1) { sp.d = 0; sp.a = s.r() * TAU; }
+      const R = sp.d * m * 0.55;
+      const size = mm * (0.006 + sp.z * 0.012) * (0.5 + sp.d);
+      ctx.globalAlpha = Math.sin(sp.d * Math.PI) * (0.4 + sp.z * 0.6);
+      ctx.drawImage(s.spr, cx + Math.cos(sp.a) * R - size, cy + Math.sin(sp.a) * R - size, size * 2, size * 2);
+    }
+    ctx.globalAlpha = 1;
+  },
+};
+
+scenes.heartbeat = {
+  scale: 0.6,
+  init() {},
+  draw(ctx, w, h, t, s) {
+    baseFill(ctx, w, h, s.p, 0);
+    const hz = h * 0.58, cx = w / 2;
+    const frac = (Date.now() % 1000) / 1000;
+    const beat = Math.exp(-frac * 5);
+    // horizon glow
+    const hg = ctx.createLinearGradient(0, hz - h * 0.35, 0, hz + h * 0.05);
+    hg.addColorStop(0, rgba(s.p.c2, 0));
+    hg.addColorStop(1, rgba(s.p.c2, 0.22 + 0.15 * beat + s.urg * 0.2));
+    ctx.fillStyle = hg;
+    ctx.fillRect(0, hz - h * 0.35, w, h * 0.4);
+    ctx.globalCompositeOperation = 'lighter';
+    // floor grid
+    const lw = Math.max(1, h * 0.0025);
+    ctx.lineWidth = lw;
+    ctx.strokeStyle = rgba(s.p.c1, 0.35 + s.amt * 0.35 + beat * 0.25);
+    ctx.beginPath();
+    for (let i = -14; i <= 14; i++) {
+      ctx.moveTo(cx + i * w * 0.012, hz);
+      ctx.lineTo(cx + i * w * 0.16, h);
+    }
+    const scroll = (t * 0.6 * (1 + s.urg * 2)) % 1;
+    for (let j = 0; j < 14; j++) {
+      const d = (j + scroll) / 14;
+      const y = hz + (h - hz) * d * d;
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+    }
+    ctx.stroke();
+    // floor fades into the horizon
+    ctx.globalCompositeOperation = 'source-over';
+    const ff = ctx.createLinearGradient(0, hz, 0, hz + (h - hz) * 0.35);
+    ff.addColorStop(0, rgba(s.p.base, 0.9));
+    ff.addColorStop(1, rgba(s.p.base, 0));
+    ctx.fillStyle = ff;
+    ctx.fillRect(0, hz, w, h - hz);
+    ctx.globalCompositeOperation = 'lighter';
+    // shockwave rings, one per second
+    const m = Math.max(w, h);
+    for (let k = 0; k < 3; k++) {
+      const f = frac + k;
+      const R = (f / 3) * m * 0.75;
+      ctx.lineWidth = Math.max(1.5, m * 0.006 * (1 - f / 3));
+      ctx.strokeStyle = rgba(k === 0 ? s.p.c2 : s.p.c3, (1 - f / 3) ** 2 * (0.35 + s.amt * 0.4));
+      ctx.beginPath();
+      ctx.ellipse(cx, h * 0.5, R, R * 0.92, 0, 0, TAU);
+      ctx.stroke();
+    }
+  },
+};
+
+scenes.fireworks = {
+  scale: 0.7,
+  init(s) {
+    s.r = rng(88);
+    s.rockets = [];
+    s.sparks = [];
+    s.next = 0.3;
+    s.cols = [s.p.c1, s.p.c2, s.p.c3, [255, 255, 255]];
+    s.fresh = true;
+  },
+  draw(ctx, w, h, t, s, dt) {
+    if (s.fresh || !dt) { baseFill(ctx, w, h, s.p, 0.1); s.fresh = false; if (!dt) { this.burst(s, 0.5, 0.35); this.burst(s, 0.25, 0.3); this.burst(s, 0.75, 0.4); for (let i = 0; i < 12; i++) this.step(ctx, w, h, s, 0.05); } }
+    fade(ctx, w, h, s.p, 0.22);
+    const rate = (1.5 - s.amt * 1.1) / (1 + s.urg * 2.5);
+    s.next -= dt;
+    if (s.next <= 0) {
+      s.next = rate * (0.4 + s.r());
+      const k = s.r() < 0.35 + s.amt * 0.3 ? 2 : 1;
+      for (let i = 0; i < k; i++) s.rockets.push({ x: 0.1 + s.r() * 0.8, y: 1.02, vy: -(0.75 + s.r() * 0.35), vx: (s.r() - 0.5) * 0.1, top: 0.12 + s.r() * 0.33, c: s.cols[Math.floor(s.r() * 4)] });
+    }
+    this.step(ctx, w, h, s, dt);
+  },
+  burst(s, x, y, c) {
+    const n = 90 + Math.floor(s.r() * 60);
+    const col = c || s.cols[Math.floor(s.r() * 4)];
+    const col2 = s.cols[Math.floor(s.r() * 4)];
+    const pw = 0.3 + s.r() * 0.2;
+    for (let i = 0; i < n; i++) {
+      const a = i / n * TAU + s.r() * 0.05;
+      const v = pw * (0.7 + s.r() * 0.3);
+      s.sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, decay: 0.45 + s.r() * 0.3, c: s.r() > 0.25 ? col : col2 });
+    }
+    if (s.sparks.length > 2500) s.sparks.splice(0, s.sparks.length - 2500);
+  },
+  step(ctx, w, h, s, dt) {
+    ctx.globalCompositeOperation = 'lighter';
+    const m = Math.min(w, h);
+    const ar = w / h;
+    for (let i = s.rockets.length - 1; i >= 0; i--) {
+      const r = s.rockets[i];
+      r.y += r.vy * dt; r.x += r.vx * dt / ar; r.vy += 0.35 * dt;
+      ctx.fillStyle = rgba([255, 240, 220], 0.9);
+      ctx.fillRect(r.x * w - 1.5, r.y * h - 1.5, 3, 3);
+      if (r.y <= r.top || r.vy >= 0) { this.burst(s, r.x, r.y, r.c); s.rockets.splice(i, 1); }
+    }
+    for (let i = s.sparks.length - 1; i >= 0; i--) {
+      const p = s.sparks[i];
+      p.x += p.vx * dt / ar; p.y += p.vy * dt;
+      p.vx *= 1 - 1.6 * dt; p.vy = p.vy * (1 - 1.6 * dt) + 0.16 * dt;
+      p.life -= p.decay * dt;
+      if (p.life <= 0) { s.sparks.splice(i, 1); continue; }
+      const size = Math.max(1.5, m * 0.0065 * Math.sqrt(p.life));
+      ctx.fillStyle = rgba(p.c, Math.min(1, p.life * 1.3));
+      ctx.fillRect(p.x * w - size / 2, p.y * h - size / 2, size, size);
+    }
+  },
+};
+
+scenes.clouds = {
+  scale: 0.3,
+  init(s) {
+    const r = rng(29);
+    s.r = r;
+    const cloudCol = mix(mix(s.p.base, [0, 0, 0], 0.2), s.p.c3, 0.3);
+    s.puffs = Array.from({ length: 34 }, () => ({ x: r() * 1.4 - 0.2, y: r() * 1.1 - 0.05, rad: 0.12 + r() * 0.2, sp: (0.006 + r() * 0.012), sh: 0.6 + r() * 0.4 }));
+    s.spr = sprite(cloudCol, 128, 0.15);
+    s.lit = sprite(mix(s.p.c2, [255, 255, 255], 0.3), 128, 0.1);
+    s.flash = 0; s.fx = 0.5; s.fy = 0.4;
+    s.nextFlash = 4 + r() * 6;
+  },
+  draw(ctx, w, h, t, s, dt) {
+    ctx.globalCompositeOperation = 'source-over';
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, rgba(mix(s.p.base, [0, 0, 0], 0.3), 1));
+    g.addColorStop(1, rgba(mix(s.p.base, s.p.c1, 0.25), 1));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    const m = Math.max(w, h);
+    // light breaking through behind the clouds
+    const beat = 0.85 + 0.15 * Math.sin(t * 0.7);
+    const lg = ctx.createRadialGradient(w * 0.5, h * 0.42, 0, w * 0.5, h * 0.42, m * 0.55);
+    lg.addColorStop(0, rgba([255, 255, 255], (0.6 + s.urg * 0.3) * beat));
+    lg.addColorStop(0.18, rgba(s.p.c2, 0.45 * beat));
+    lg.addColorStop(1, rgba(s.p.c2, 0));
+    ctx.fillStyle = lg;
+    ctx.fillRect(0, 0, w, h);
+    // light shafts from behind the clouds
+    ctx.globalCompositeOperation = 'lighter';
+    const lx = w * 0.5, ly = h * 0.42;
+    for (let i = 0; i < 14; i++) {
+      const a = i / 14 * TAU + t * 0.02;
+      const wd = 0.06 + 0.03 * Math.sin(t * 0.4 + i);
+      const rg = ctx.createRadialGradient(lx, ly, 0, lx, ly, m * 0.8);
+      rg.addColorStop(0, rgba(s.p.c2, (0.1 + s.amt * 0.12) * beat));
+      rg.addColorStop(1, rgba(s.p.c2, 0));
+      ctx.fillStyle = rg;
+      ctx.beginPath(); ctx.moveTo(lx, ly); ctx.arc(lx, ly, m * 0.8, a - wd, a + wd); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    // soft flash inside the clouds now and then (gentle, never a strobe)
+    if (dt) {
+      s.nextFlash -= dt;
+      if (s.nextFlash <= 0 && s.amt > 0.1) { s.flash = 1; s.fx = 0.15 + s.r() * 0.7; s.fy = 0.15 + s.r() * 0.4; s.nextFlash = (12 - s.amt * 7) * (0.6 + s.r() * 0.8) / (1 + s.urg * 2); }
+      s.flash = Math.max(0, s.flash - dt * 1.8);
+    }
+    for (const p of s.puffs) {
+      p.x += p.sp * dt; if (p.x - p.rad > 1.2) p.x = -0.2 - p.rad;
+      const size = p.rad * m;
+      const X = p.x * w - size, Y = p.y * h - size * p.sh;
+      ctx.globalAlpha = 0.6 + s.amt * 0.35;
+      ctx.drawImage(s.spr, X, Y, size * 2, size * 2 * p.sh);
+      const d = Math.hypot(p.x - 0.5, (p.y - 0.42) * 1.3);
+      const rim = Math.max(0, 1 - d * 2) * 0.8 + s.flash * Math.max(0, 1 - Math.hypot(p.x - s.fx, p.y - s.fy) * 2.5);
+      if (rim > 0.02) {
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = Math.min(1, rim);
+        ctx.drawImage(s.lit, X, Y, size * 2, size * 2 * p.sh);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+    ctx.globalAlpha = 1;
+  },
+};
+
 // ---------------------------------------------------------------- runner
 const MAX_PIXELS = 1920 * 1080;
 
@@ -531,7 +961,7 @@ export class SceneRunner {
     this.bg = { ...bg };
     this.scene = scenes[bg.scene] || scenes.none;
     if (sceneChanged) {
-      this.state = { p: { base: hexToRgb(bg.base), c1: hexToRgb(bg.c1), c2: hexToRgb(bg.c2), c3: hexToRgb(bg.c3) }, amt: bg.amount / 100 };
+      this.state = { p: { base: hexToRgb(bg.base), c1: hexToRgb(bg.c1), c2: hexToRgb(bg.c2), c3: hexToRgb(bg.c3) }, amt: bg.amount / 100, urg: this.urg || 0 };
       this.scene.init(this.state);
       this.resize(true);
     }
@@ -570,11 +1000,17 @@ export class SceneRunner {
 
   stop() { this.running = false; }
 
+  // 0..1: how close we are to zero (rises over the final minute).
+  setUrgency(u) {
+    this.urg = u;
+    if (this.state) this.state.urg = u;
+  }
+
   loop(now) {
     if (!this.running) return;
     const dt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
-    const speed = (this.bg ? this.bg.speed : 1) * (this.reduced ? 0.35 : 1);
+    const speed = (this.bg ? this.bg.speed : 1) * (this.reduced ? 0.35 : 1) * (1 + (this.urg || 0) * 0.6);
     this.t += dt * speed;
     if (this.scene && !this.scene.still) {
       this.scene.draw(this.ctx, this.canvas.width, this.canvas.height, this.t, this.state, dt * speed);
@@ -589,10 +1025,10 @@ export class SceneRunner {
 export function renderStill(canvas, bg, t = 6) {
   const scene = scenes[bg.scene] || scenes.none;
   const ctx = canvas.getContext('2d', { alpha: false });
-  const state = { p: { base: hexToRgb(bg.base), c1: hexToRgb(bg.c1), c2: hexToRgb(bg.c2), c3: hexToRgb(bg.c3) }, amt: bg.amount / 100 };
+  const state = { p: { base: hexToRgb(bg.base), c1: hexToRgb(bg.c1), c2: hexToRgb(bg.c2), c3: hexToRgb(bg.c3) }, amt: bg.amount / 100, urg: 0 };
   scene.init(state);
   // run a few steps so moving scenes settle into a natural look
-  for (let i = 0; i < 3; i++) scene.draw(ctx, canvas.width, canvas.height, t + i * 0.2, state, 0.2);
+  for (let i = 0; i < 4; i++) scene.draw(ctx, canvas.width, canvas.height, t + i * 0.2, state, i ? 0.2 : 0);
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
   if (bg.dim) { ctx.fillStyle = `rgba(0,0,0,${bg.dim / 100})`; ctx.fillRect(0, 0, canvas.width, canvas.height); }

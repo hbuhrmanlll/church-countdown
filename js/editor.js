@@ -555,16 +555,20 @@ export class Editor {
   paneBg(pane) {
     const bg = this.cfg.bg;
     const cards = h('div', { class: 'cards' });
+    const epicCards = h('div', { class: 'cards' });
     for (const s of SCENE_LIST) {
       const cv = h('canvas', { width: 192, height: 108, 'aria-hidden': 'true' });
       const card = h('button', { class: 'card', type: 'button', 'aria-pressed': String(bg.scene === s.id), 'aria-label': `${s.name}, ${s.feel}` },
         h('span', { class: 'thumb' }, cv),
         h('span', { class: 'meta' }, h('b', { text: s.name }), h('small', { text: s.feel })));
       card.onclick = () => { bg.scene = s.id; this.commit(true, true); };
-      cards.append(card);
+      (s.feel === 'Epic' ? epicCards : cards).append(card);
       requestAnimationFrame(() => renderStill(cv, { ...bg, scene: s.id }, 5));
     }
-    pane.append(group('Animation', 'Runs behind your words while it counts down.', cards));
+    pane.append(
+      group('Epic', 'Big and bold. Made to grab the room and look great on a livestream.', epicCards),
+      group('Calm and classic', 'Softer motion that sits quietly behind your words.', cards),
+    );
 
     const sw = h('div', { class: 'swatches' });
     for (const p of PALETTES) {
@@ -583,7 +587,9 @@ export class Editor {
       rangeRow('Speed', { min: 0.2, max: 3, step: 0.1, get: () => bg.speed, set: (v, f) => { bg.speed = v; this.commit(f); }, fmt: (v) => v.toFixed(1) + 'x' }),
       rangeRow('Amount', { min: 0, max: 100, step: 5, get: () => bg.amount, set: (v, f) => { bg.amount = v; this.commit(f, f); }, fmt: (v) => v + '%' }),
       rangeRow('Darken', { min: 0, max: 85, step: 5, get: () => bg.dim, set: (v, f) => { bg.dim = v; this.commit(f, f); }, fmt: (v) => v + '%' }),
-      h('p', { class: 'hint', text: 'Darken makes words easier to read on bright projectors.' }),
+      h('p', { class: 'hint', text: 'Darken makes words easier to read on bright projectors and livestreams.' }),
+      switchRow('Build up to zero', { get: () => bg.build, set: (v) => { bg.build = v; this.commit(true); } }),
+      h('p', { class: 'hint', text: 'In the last minute the animation speeds up and brightens, then a soft burst of light fills the screen at zero.' }),
     ));
   }
 

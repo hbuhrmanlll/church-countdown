@@ -109,7 +109,8 @@ export class Stage {
     this.dim = el('div', 'stage-dim');
     this.vignette = el('div', 'stage-vignette');
     this.layers = el('div', 'stage-layers');
-    root.append(this.canvas, this.dim, this.vignette, this.layers);
+    this.flash = el('div', 'stage-flash');
+    root.append(this.canvas, this.dim, this.vignette, this.flash, this.layers);
     this.scene = new SceneRunner(this.canvas);
     this.textEls = new Map();
     this.timerEl = el('div', 'layer timer');
@@ -273,13 +274,19 @@ export class Stage {
     if (!this.cfg) return;
     this.lastLeft = left;
     const phase = this.force || (left <= 0 ? 'after' : 'before');
+    // The background builds up over the final minute.
+    const urg = this.cfg.bg.build && !this.force && left > 0 && left < 60000 ? (1 - left / 60000) ** 2 : 0;
+    if (Math.abs(urg - (this.urg || 0)) > 0.004 || (urg === 0 && this.urg)) { this.urg = urg; this.scene.setUrgency(urg); }
     const shownLeft = this.force === 'after' ? 0 : this.force === 'before' && left <= 0 ? this.previewLeft() : left;
     const p = splitTime(shownLeft);
     if (phase !== this.phase) {
       const was = this.phase;
       this.phase = phase;
       this.applyPhase();
-      if (was === 'before' && phase === 'after' && !this.force && this.onEnd) this.onEnd();
+      if (was === 'before' && phase === 'after' && !this.force) {
+        if (this.cfg.bg.build) this.zeroFlash();
+        if (this.onEnd) this.onEnd();
+      }
     }
     if (p.total === this.lastShown && !structural && this.timerKey) return;
     this.lastShown = p.total;
@@ -300,6 +307,14 @@ export class Stage {
       this.timerEl.animate([{ scale: '1' }, { scale: '1.045' }, { scale: '1' }], { duration: 600, easing: 'ease-out' });
     }
     this.timerEl.setAttribute('aria-label', `${p.d ? p.d + ' days ' : ''}${p.h} hours ${p.m} minutes ${p.s} seconds left`);
+  }
+
+  // A soft burst of light at zero. One slow fade, never a strobe.
+  zeroFlash() {
+    if (!this.flash.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    this.flash.style.background = `radial-gradient(circle at 50% 50%, #ffffff 0%, ${this.cfg.bg.c2} 35%, transparent 75%)`;
+    this.flash.animate([{ opacity: 0 }, { opacity: 0.85, offset: 0.12 }, { opacity: 0 }], { duration: 1800, easing: 'ease-out' });
+    this.scene.setUrgency(0);
   }
 
   // Shrink the numbers if they would run off the sides of the screen.

@@ -9,7 +9,11 @@ A free, animated countdown timer for churches. Pick a time, add your own words a
 - **Three kinds of countdowns:** every week (like Sunday at 10:30), one date (like Christmas Eve), or a set length (like a 10 minute break).
 - **Your words, anywhere.** Add up to 12 pieces of text. Drag them on the preview. Pick from 10 fonts, any color, any size. Set each one to show while counting, at zero, or always.
 - **Numbers only** if you want. Remove all words, or hide the numbers and keep the words.
-- **10 background animations,** from subtle to bold: soft glow, candlelight, snowfall, still waters, morning light, northern lights, rising embers, night sky, stained glass, and halo rings. Pick colors, speed, and how much is going on.
+- **18 background animations.**
+  - **Epic:** lightspeed, arena lights, glory rays, glory clouds, light tunnel, heartbeat, galaxy, and fireworks. Big, bold motion made for the room and the livestream.
+  - **Calm and classic:** soft glow, candlelight, snowfall, still waters, morning light, northern lights, rising embers, night sky, stained glass, and halo rings.
+  - Pick colors, speed, and how much is going on.
+- **Build up to zero.** In the final minute the background speeds up and brightens, then a soft burst of light fills the screen at zero (one slow fade, never a strobe).
 - **The link is the save file.** All settings ride inside the link (after the `#`), so nothing is stored on a server and no account is needed.
 - Made for projectors: text scales to any screen size, the screen stays awake, and the mouse hides itself.
 

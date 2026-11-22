@@ -34,6 +34,87 @@ export const TEMPLATES = [
     }),
   },
   {
+    id: 'lightspeed', name: 'Lightspeed', scene: 'lightspeed', palette: 'royal',
+    build: () => make({
+      title: 'Service starts soon',
+      bg: { scene: 'lightspeed', ...pal('royal'), amount: 70, dim: 15, speed: 1 },
+      texts: [
+        { text: 'Service starts in', y: 29, size: 6, font: 'outfit', weight: 600, spacing: 10, upper: true },
+        { text: "Let's worship", y: 50, size: 16, font: 'bebas', weight: 400, spacing: 4, upper: true, show: 'after' },
+      ],
+      timer: { style: 'clock', y: 55, size: 30, font: 'bebas', weight: 400, labels: false, glow: 60, motion: 'rise' },
+    }),
+  },
+  {
+    id: 'arena', name: 'Arena', scene: 'arena', palette: 'neon',
+    build: () => make({
+      title: 'Worship night',
+      bg: { scene: 'arena', ...pal('neon'), amount: 70, dim: 10 },
+      texts: [
+        { text: 'Worship night', y: 23, size: 13, font: 'oswald', weight: 700, spacing: 3, upper: true },
+        { text: 'Starts in', y: 36, size: 4.6, font: 'outfit', weight: 600, spacing: 12, upper: true, color: '#22e1ff' },
+        { text: 'Here we go', y: 50, size: 18, font: 'oswald', weight: 700, spacing: 3, upper: true, show: 'after' },
+      ],
+      timer: { style: 'tiles', y: 62, size: 20, font: 'oswald', weight: 600, labels: true, glow: 45, motion: 'rise', tile: '#7a3cff' },
+    }),
+  },
+  {
+    id: 'glory', name: 'Glory', scene: 'glory', palette: 'easter',
+    build: () => make({
+      title: 'Sunday celebration',
+      bg: { scene: 'glory', ...pal('royal'), amount: 60, dim: 25, speed: 1 },
+      texts: [
+        { text: 'Sunday celebration', y: 27, size: 9.5, font: 'cormorant', weight: 700, color: '#ffe7a8' },
+        { text: 'begins in', y: 38, size: 4.8, font: 'outfit', weight: 500, spacing: 8, upper: true },
+        { text: 'Welcome home', y: 50, size: 15, font: 'cormorant', weight: 700, color: '#ffe7a8', show: 'after' },
+      ],
+      timer: { style: 'clock', y: 58, size: 25, font: 'outfit', weight: 700, labels: false, glow: 55 },
+    }),
+  },
+  {
+    id: 'heartbeat', name: 'Heartbeat', scene: 'heartbeat', palette: 'neon',
+    build: () => make({
+      title: 'Youth',
+      time: { mode: 'weekly', wd: 3, tm: '19:00' },
+      bg: { scene: 'heartbeat', ...pal('neon'), amount: 65, dim: 0 },
+      texts: [
+        { text: 'Youth', y: 20, size: 20, font: 'bebas', weight: 400, spacing: 8, upper: true },
+        { text: "Let's go!", y: 45, size: 22, font: 'bebas', weight: 400, spacing: 6, upper: true, show: 'after' },
+      ],
+      timer: { style: 'clock', y: 45, size: 26, font: 'bebas', weight: 400, labels: false, glow: 70, color: '#ffffff', motion: 'rise' },
+    }),
+  },
+  {
+    id: 'newyear', name: "New Year's Eve", scene: 'fireworks', palette: 'midnight',
+    build: () => {
+      const y = new Date().getFullYear();
+      let at = new Date(y + 1, 0, 1, 0, 0, 0).getTime();
+      return make({
+        title: "New Year's Eve",
+        time: { mode: 'date', at },
+        bg: { scene: 'fireworks', ...pal('midnight'), amount: 60, dim: 0 },
+        texts: [
+          { text: String(y + 1), y: 24, size: 16, font: 'fraunces', weight: 800, color: '#f5c451' },
+          { text: 'Happy New Year!', y: 48, size: 14, font: 'fraunces', weight: 700, show: 'after' },
+          { text: 'A new year of grace', y: 62, size: 5, font: 'outfit', weight: 500, spacing: 4, show: 'after' },
+        ],
+        timer: { style: 'labels', y: 58, size: 18, font: 'outfit', weight: 700, labels: true, glow: 40, hideAtEnd: true },
+      });
+    },
+  },
+  {
+    id: 'galaxy', name: 'Beyond', scene: 'galaxy', palette: 'advent',
+    build: () => make({
+      title: 'Beyond',
+      bg: { scene: 'galaxy', ...pal('advent'), amount: 65, dim: 10 },
+      texts: [
+        { text: 'Our service begins in', y: 24, size: 5.5, font: 'spacegrotesk', weight: 500, spacing: 6, upper: true },
+        { text: 'Welcome', y: 50, size: 16, font: 'spacegrotesk', weight: 700, show: 'after' },
+      ],
+      timer: { style: 'clock', y: 76, size: 18, font: 'spacegrotesk', weight: 600, labels: false, glow: 45 },
+    }),
+  },
+  {
     id: 'numbers', name: 'Numbers only', scene: 'glow', palette: 'midnight',
     build: () => make({
       title: 'Countdown',
