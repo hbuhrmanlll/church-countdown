@@ -123,7 +123,8 @@ class Display {
     this.root.onpointerdown = () => { unlockAudio(); $('soundBtn').hidden = !cfg.end.chime || audioReady(); this.poke(); };
     this.root.ondblclick = (e) => { if (!e.target.closest('.btn')) this.toggleFs(); };
     this.poke();
-    if (!document.fullscreenElement) setTimeout(() => toast('Press F for full screen'), 900);
+    const touch = matchMedia('(pointer: coarse)').matches;
+    if (!document.fullscreenElement) setTimeout(() => toast(touch ? 'Tap the screen to show the buttons' : 'Press F for full screen'), 900);
   }
 
   poke() {

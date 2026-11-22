@@ -2,7 +2,7 @@
 // Everything that comes from a link is treated as untrusted and rebuilt from
 // known-good values. Nothing from a link is ever inserted as HTML.
 
-export const APP_VERSION = '1.2.1';
+export const APP_VERSION = '1.2.2';
 
 export const FONTS = {
   outfit: { name: 'Outfit', css: "'Outfit', system-ui, sans-serif", weights: [300, 400, 500, 600, 700, 800] },

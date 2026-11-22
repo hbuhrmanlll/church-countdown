@@ -379,7 +379,10 @@ export class Stage {
     const W = this.root.clientWidth;
     const natural = this.timerEl.offsetWidth;
     if (!W || !natural) return;
-    const k = Math.min(1, (W * 0.94) / natural);
+    // Keep a safe margin on both sides, measured from where the numbers are centered.
+    const x = Math.min(100, Math.max(0, Number(this.cfg.timer.x) || 50)) / 100;
+    const half = Math.max(W * 0.1, Math.min(x, 1 - x) * W) * 0.9;
+    const k = Math.min(1, (2 * half) / natural);
     this.timerEl.style.transform = k < 1 ? `translate(-50%, -50%) scale(${k.toFixed(4)})` : '';
   }
 
