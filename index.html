@@ -38,6 +38,10 @@
         <button class="btn ghost icon" id="redoBtn" type="button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
         </button>
+        <button class="btn ghost" id="setupBtn" type="button" title="Walk through setup again">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 4 5 5L9 20H4v-5z"/><path d="m13 6 5 5"/></svg>
+          <span>Set up</span>
+        </button>
         <button class="btn ghost" id="aboutBtn" type="button">About</button>
         <button class="btn ghost" id="presentBtn" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
@@ -64,6 +68,11 @@
             <button type="button" role="radio" data-v="after" aria-checked="false">At zero</button>
           </div>
           <p class="preview-note" id="previewNote"></p>
+          <div class="demo-bar" id="demoBar" hidden>
+            <span>Showing the last minute</span>
+            <button class="btn small" type="button" id="demoStop">Stop</button>
+          </div>
+          <button class="btn small ghost collapse-btn" type="button" id="collapseBtn" aria-expanded="true">Hide preview</button>
           <div class="dur-controls" id="durControls" hidden>
             <button class="btn small" type="button" id="prevPlay">Start</button>
             <button class="btn small ghost" type="button" id="prevReset">Reset</button>
@@ -72,6 +81,10 @@
       </section>
 
       <aside class="panel" aria-label="Settings">
+        <div class="wiz-head" id="wizHead">
+          <p class="wiz-step" id="wizStep">Step 1 of 3</p>
+          <h2 id="wizTitle">Pick a look</h2>
+        </div>
         <nav class="tabs" role="tablist" aria-label="Settings sections">
           <button role="tab" type="button" id="tab-start" aria-controls="pane-start" aria-selected="true">Start</button>
           <button role="tab" type="button" id="tab-time" aria-controls="pane-time" aria-selected="false">Time</button>
@@ -87,6 +100,12 @@
           <section class="pane" role="tabpanel" id="pane-timer" aria-labelledby="tab-timer" hidden></section>
           <section class="pane" role="tabpanel" id="pane-bg" aria-labelledby="tab-bg" hidden></section>
           <section class="pane" role="tabpanel" id="pane-share" aria-labelledby="tab-share" hidden></section>
+        </div>
+        <div class="wiz-foot" id="wizFoot">
+          <button class="btn ghost small" type="button" id="wizSkip">Skip</button>
+          <span class="spacer"></span>
+          <button class="btn small" type="button" id="wizBack" hidden>Back</button>
+          <button class="btn primary" type="button" id="wizNext">Next</button>
         </div>
       </aside>
     </main>

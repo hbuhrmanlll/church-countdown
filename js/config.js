@@ -2,7 +2,7 @@
 // Everything that comes from a link is treated as untrusted and rebuilt from
 // known-good values. Nothing from a link is ever inserted as HTML.
 
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.2.0';
 
 export const FONTS = {
   outfit: { name: 'Outfit', css: "'Outfit', system-ui, sans-serif", weights: [300, 400, 500, 600, 700, 800] },
@@ -68,6 +68,7 @@ const ENUMS = {
   style: ['clock', 'labels', 'tiles'],
   units: ['auto', 'dhms', 'hms', 'ms'],
   motion: ['none', 'fade', 'slide', 'rise'],
+  finale: ['fly', 'zoom', 'flip', 'none'],
   align: ['left', 'center', 'right'],
   show: ['always', 'before', 'after'],
   scene: SCENE_LIST.map((s) => s.id),
@@ -141,6 +142,8 @@ export function defaultConfig() {
       tile: '#ffffff',
       hideAtEnd: true,
       pulse: true,
+      finale: 'fly',
+      big10: true,
     },
     texts: [
       defaultText({ text: 'Service begins in', y: 30, size: 5.5, weight: 400, spacing: 4, upper: false }),
@@ -260,6 +263,8 @@ export function sanitize(input) {
       tile: color(tm.tile, d.timer.tile),
       hideAtEnd: bool(tm.hideAtEnd, true),
       pulse: bool(tm.pulse, true),
+      finale: oneOf(tm.finale, ENUMS.finale, 'fly'),
+      big10: bool(tm.big10, true),
     },
     texts,
     bg: {

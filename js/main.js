@@ -211,7 +211,9 @@ async function route() {
   document.title = 'Kairos Countdown';
   if (!editor) {
     splash();
-    editor = new Editor(cfg || loadDraft() || TEMPLATES[0].build());
+    const draft = cfg ? null : loadDraft();
+    editor = new Editor(cfg || draft || TEMPLATES[0].build());
+    if (!cfg && !draft) editor.startWizard();
     if (cfg) toast('Opened a copy you can edit.');
   } else {
     editor.stage.start();

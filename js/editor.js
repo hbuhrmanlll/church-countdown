@@ -66,8 +66,64 @@ export class Editor {
     this.renderPane();
     this.markSelection();
     this.updatePreviewBar();
-    this.tick = setInterval(() => this.stage.update(this.clock.remaining(this.cfg.time)), 100);
+    this.tick = setInterval(() => this.stage.update(this.left()), 100);
+    this.stage.update(this.left(), true);
+  }
+
+  // Time left for the preview. A "last minute" demo overrides the real time.
+  left() {
+    if (this.demoEnd) {
+      const l = this.demoEnd - Date.now();
+      if (l < -6000) this.stopDemo(); else return l;
+    }
+    return this.clock.remaining(this.cfg.time);
+  }
+
+  startDemo(seconds = 65) {
+    this.demoEnd = Date.now() + seconds * 1000;
+    this.stage.force = null;
+    document.querySelectorAll('#phaseSeg button').forEach((x) => x.setAttribute('aria-checked', String(x.dataset.v === 'live')));
+    this.phase = 'live';
+    $('demoBar').hidden = false;
+    unlockAudio();
+  }
+
+  stopDemo() {
+    this.demoEnd = null;
+    $('demoBar').hidden = true;
     this.stage.update(this.clock.remaining(this.cfg.time), true);
+  }
+
+  // ---------------------------------------------------------------- setup walk-through
+  startWizard() {
+    this.wiz = 0;
+    this.wizSteps = ['start', 'time', 'words'];
+    document.querySelector('.panel').classList.add('wizard');
+    this.showWizStep();
+  }
+
+  showWizStep() {
+    const step = this.wizSteps[this.wiz];
+    const titles = ['Pick a look', 'When does it end?', 'Your words'];
+    $('wizStep').textContent = `Step ${this.wiz + 1} of ${this.wizSteps.length}`;
+    $('wizTitle').textContent = titles[this.wiz];
+    $('wizBack').hidden = this.wiz === 0;
+    $('wizNext').textContent = this.wiz === this.wizSteps.length - 1 ? 'Done' : 'Next';
+    this.setTab(step);
+  }
+
+  wizNext(delta = 1) {
+    this.wiz += delta;
+    if (this.wiz < 0) this.wiz = 0;
+    if (this.wiz >= this.wizSteps.length) { this.endWizard(); return; }
+    this.showWizStep();
+  }
+
+  endWizard() {
+    this.wiz = null;
+    document.querySelector('.panel').classList.remove('wizard');
+    this.setTab('share');
+    this.flashHint('All set. Copy your link to share it, or press Show it.');
   }
 
   // ---------------------------------------------------------------- state
@@ -140,7 +196,7 @@ export class Editor {
         segBtns.forEach((x) => x.setAttribute('aria-checked', String(x === b)));
         this.phase = b.dataset.v;
         this.stage.force = this.phase === 'live' ? null : this.phase;
-        this.stage.update(this.clock.remaining(this.cfg.time), true);
+        this.stage.update(this.left(), true);
         if (this.phase === 'after' && this.sel === 'timer' && this.cfg.timer.hideAtEnd) this.flashHint('The numbers hide at zero. You can change that in Numbers.');
       };
     });
@@ -153,6 +209,20 @@ export class Editor {
       this.updatePreviewBar();
     };
     $('prevReset').onclick = () => { this.clock.restart(this.cfg.time, false); this.updatePreviewBar(); };
+    $('demoStop').onclick = () => this.stopDemo();
+    $('setupBtn').onclick = () => this.startWizard();
+    $('wizNext').onclick = () => this.wizNext(1);
+    $('wizBack').onclick = () => this.wizNext(-1);
+    $('wizSkip').onclick = () => this.endWizard();
+    const prev = document.querySelector('.preview');
+    const setCollapsed = (v) => {
+      prev.classList.toggle('collapsed', v);
+      $('collapseBtn').textContent = v ? 'Show preview' : 'Hide preview';
+      $('collapseBtn').setAttribute('aria-expanded', String(!v));
+      try { localStorage.setItem('kairos.previewCollapsed', v ? '1' : '0'); } catch { /* ignore */ }
+    };
+    $('collapseBtn').onclick = () => setCollapsed(!prev.classList.contains('collapsed'));
+    try { if (localStorage.getItem('kairos.previewCollapsed') === '1') setCollapsed(true); } catch { /* ignore */ }
 
     document.addEventListener('keydown', (e) => {
       if (document.getElementById('editor').hidden) return;
@@ -339,6 +409,7 @@ export class Editor {
         this.sel = 'timer';
         this.clock.reset();
         this.commit(true, true);
+        if (this.wiz === 0) { this.wizNext(1); return; }
         this.flashHintUndo(`Started from “${tpl.name}”.`, prev);
       };
       cards.append(card);
@@ -346,7 +417,7 @@ export class Editor {
     }
     pane.append(
       group('Pick a starting point', 'Everything can be changed after you pick one. Your work saves on this device as you go.', cards),
-      group('How it works', null, h('ol', { class: 'steps' },
+      this.wiz != null ? null : group('How it works', null, h('ol', { class: 'steps' },
         h('li', { text: 'Set the time in Time.' }),
         h('li', { text: 'Change or add words in Words. Drag anything on the preview to move it.' }),
         h('li', { text: 'Pick an animation and colors in Background.' }),
@@ -548,6 +619,21 @@ export class Editor {
       this.readability(tm.color),
       rangeRow('Glow', { min: 0, max: 100, step: 5, get: () => tm.glow, set: (v, f) => { tm.glow = v; this.commit(f); }, fmt: (v) => v + '%' }),
       tm.style === 'tiles' ? colorRow('Tile color', { get: () => tm.tile, set: (v, f) => { tm.tile = v; this.commit(f); } }) : null,
+    ));
+    pane.append(group('The last minute', 'Make the end of the countdown feel like an event.',
+      selectRow('Each second', {
+        options: [
+          { value: 'fly', label: 'Numbers fly off and back on' },
+          { value: 'zoom', label: 'Numbers zoom past you' },
+          { value: 'flip', label: 'Numbers flip over' },
+          { value: 'none', label: 'Normal' },
+        ],
+        get: () => tm.finale, set: (v) => { tm.finale = v; this.commit(true); },
+      }),
+      switchRow('Giant numbers for the last 10 seconds', { get: () => tm.big10, set: (v) => { tm.big10 = v; this.commit(true); } }),
+      switchRow('Background builds up to zero', { get: () => this.cfg.bg.build, set: (v) => { this.cfg.bg.build = v; this.commit(true); } }),
+      h('div', { class: 'btn-row' }, h('button', { class: 'btn small primary', type: 'button', text: 'Watch the last minute', onclick: () => this.startDemo(65) })),
+      h('p', { class: 'hint', text: 'Plays the final minute in the preview so you can see it. Your real time is not changed.' }),
     ));
     pane.append(group('Position', 'Or drag the numbers on the preview.', ...this.positionRows(tm)));
   }

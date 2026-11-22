@@ -258,7 +258,9 @@ export class Stage {
     for (let i = 0; i < str.length; i++) {
       const c = grp.cells[i];
       if (c.textContent === str[i]) continue;
+      const old = c.textContent;
       c.textContent = str[i];
+      if (animate && this.inFinal && !reduced && c.animate) { this.finaleDigit(c, old, i); continue; }
       if (!animate || motion === 'none' || reduced || !c.animate) continue;
       const frames = motion === 'fade'
         ? [{ opacity: 0.15 }, { opacity: 1 }]
@@ -266,6 +268,56 @@ export class Stage {
           ? [{ transform: 'translateY(-0.28em)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }]
           : [{ transform: 'translateY(0.3em) scale(.96)', opacity: 0, filter: 'blur(0.04em)' }, { transform: 'none', opacity: 1, filter: 'blur(0)' }];
       c.animate(frames, { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+  }
+
+  // Final minute: the old digit leaves the screen and the new one arrives.
+  finaleDigit(c, old, i) {
+    const kind = this.cfg.timer.finale;
+    const ghost = el('span', 'dg-ghost');
+    ghost.textContent = old;
+    c.append(ghost);
+    const dir = i % 2 ? 1 : -1;
+    const opt = { duration: 650, easing: 'cubic-bezier(.5,0,.2,1)', fill: 'forwards' };
+    let out, inn;
+    if (kind === 'fly') {
+      out = [{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${dir * 0.6}em,-2.6em) rotate(${dir * 25}deg)`, opacity: 0 }];
+      inn = [{ transform: 'translateY(2.4em) scale(.7)', opacity: 0 }, { transform: 'translateY(-0.08em) scale(1.05)', opacity: 1, offset: 0.75 }, { transform: 'none', opacity: 1 }];
+    } else if (kind === 'zoom') {
+      out = [{ transform: 'scale(1)', opacity: 1, filter: 'blur(0)' }, { transform: 'scale(3.2)', opacity: 0, filter: 'blur(0.05em)' }];
+      inn = [{ transform: 'scale(.2)', opacity: 0 }, { transform: 'scale(1.12)', opacity: 1, offset: 0.7 }, { transform: 'scale(1)', opacity: 1 }];
+    } else {
+      out = [{ transform: 'perspective(4em) rotateX(0)', opacity: 1 }, { transform: 'perspective(4em) rotateX(90deg)', opacity: 0 }];
+      inn = [{ transform: 'perspective(4em) rotateX(-90deg)', opacity: 0 }, { transform: 'perspective(4em) rotateX(0)', opacity: 1 }];
+    }
+    const a = ghost.animate(out, opt);
+    a.onfinish = () => ghost.remove();
+    setTimeout(() => ghost.remove(), 900);
+    c.animate(inn, { duration: 700, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  }
+
+  // The last 10 seconds take over the screen with one giant number.
+  showBig(n) {
+    if (!this.big) {
+      this.big = el('div', 'big-count');
+      this.big.setAttribute('aria-hidden', 'true');
+      this.layers.append(this.big);
+    }
+    const tm = this.cfg.timer;
+    const b = this.big;
+    b.style.fontFamily = FONTS[tm.font].css;
+    b.style.fontWeight = tm.weight;
+    b.style.color = tm.color;
+    b.style.textShadow = this.timerEl.style.textShadow;
+    if (b.textContent === String(n)) return;
+    b.textContent = String(n);
+    if (b.animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      b.animate([
+        { transform: 'translate(-50%,-50%) scale(1.9)', opacity: 0, filter: 'blur(0.03em)' },
+        { transform: 'translate(-50%,-50%) scale(0.96)', opacity: 1, filter: 'blur(0)', offset: 0.35 },
+        { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: 0.8 },
+        { transform: 'translate(-50%,-50%) scale(1.04)', opacity: 0.9 },
+      ], { duration: 1000, easing: 'cubic-bezier(.2,.8,.2,1)' });
     }
   }
 
@@ -288,6 +340,10 @@ export class Stage {
         if (this.onEnd) this.onEnd();
       }
     }
+    this.inFinal = phase === 'before' && p.total > 0 && p.total <= 60 && this.cfg.timer.finale !== 'none';
+    const big = this.cfg.timer.big10 && this.cfg.timer.show && phase === 'before' && p.total > 0 && p.total <= 10;
+    if (big !== !!this.bigOn) { this.bigOn = big; this.root.classList.toggle('final10', big); if (!big && this.big) this.big.textContent = ''; }
+    if (big) this.showBig(p.total);
     if (p.total === this.lastShown && !structural && this.timerKey) return;
     this.lastShown = p.total;
     const units = this.unitsFor(p);
