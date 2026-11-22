@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Make a beautiful animated countdown for church. Pick a time, add your words, choose a background, and share it as a link.">
+  <meta name="theme-color" content="#0b1026">
+  <title>Kairos Countdown</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <noscript><p class="noscript">This countdown needs JavaScript turned on.</p></noscript>
+
+  <!-- Splash (editor only). Swap the placeholder for the official Third Heaven Studios logo file. -->
+  <div id="splash" class="splash" hidden>
+    <div class="splash-inner">
+      <div class="studio-logo" data-placeholder="third-heaven-studios-logo">Third Heaven Studios</div>
+      <p class="splash-app">Kairos Countdown</p>
+    </div>
+  </div>
+
+  <!-- ================= EDITOR ================= -->
+  <div id="editor" class="editor" hidden>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Kairos Countdown home">
+        <img src="assets/icon.svg" alt="" width="28" height="28">
+        <span>Kairos Countdown</span>
+      </a>
+      <div class="top-actions">
+        <button class="btn ghost icon" id="undoBtn" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+        </button>
+        <button class="btn ghost icon" id="redoBtn" type="button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>
+        </button>
+        <button class="btn ghost" id="aboutBtn" type="button">About</button>
+        <button class="btn ghost" id="presentBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span>Show it</span>
+        </button>
+        <button class="btn primary" id="copyBtn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>
+          <span>Copy link</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="preview" aria-label="Preview">
+        <div class="stage-frame">
+          <div id="editStage" tabindex="0" aria-label="Preview of your countdown. Drag words and the timer to move them."></div>
+          <div class="guide v" aria-hidden="true"></div>
+          <div class="guide h" aria-hidden="true"></div>
+        </div>
+        <div class="preview-bar">
+          <div class="seg" role="radiogroup" aria-label="What the preview shows" id="phaseSeg">
+            <button type="button" role="radio" data-v="live" aria-checked="true">Live</button>
+            <button type="button" role="radio" data-v="before" aria-checked="false">Counting</button>
+            <button type="button" role="radio" data-v="after" aria-checked="false">At zero</button>
+          </div>
+          <p class="preview-note" id="previewNote"></p>
+          <div class="dur-controls" id="durControls" hidden>
+            <button class="btn small" type="button" id="prevPlay">Start</button>
+            <button class="btn small ghost" type="button" id="prevReset">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel" aria-label="Settings">
+        <nav class="tabs" role="tablist" aria-label="Settings sections">
+          <button role="tab" type="button" id="tab-start" aria-controls="pane-start" aria-selected="true">Start</button>
+          <button role="tab" type="button" id="tab-time" aria-controls="pane-time" aria-selected="false">Time</button>
+          <button role="tab" type="button" id="tab-words" aria-controls="pane-words" aria-selected="false">Words</button>
+          <button role="tab" type="button" id="tab-timer" aria-controls="pane-timer" aria-selected="false">Numbers</button>
+          <button role="tab" type="button" id="tab-bg" aria-controls="pane-bg" aria-selected="false">Background</button>
+          <button role="tab" type="button" id="tab-share" aria-controls="pane-share" aria-selected="false">Share</button>
+        </nav>
+        <div class="panes">
+          <section class="pane" role="tabpanel" id="pane-start" aria-labelledby="tab-start"></section>
+          <section class="pane" role="tabpanel" id="pane-time" aria-labelledby="tab-time" hidden></section>
+          <section class="pane" role="tabpanel" id="pane-words" aria-labelledby="tab-words" hidden></section>
+          <section class="pane" role="tabpanel" id="pane-timer" aria-labelledby="tab-timer" hidden></section>
+          <section class="pane" role="tabpanel" id="pane-bg" aria-labelledby="tab-bg" hidden></section>
+          <section class="pane" role="tabpanel" id="pane-share" aria-labelledby="tab-share" hidden></section>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- ================= DISPLAY ================= -->
+  <div id="display" class="display" hidden>
+    <div id="showStage"></div>
+    <div class="show-start" id="showStart" hidden>
+      <button class="btn primary big" type="button" id="showStartBtn">Start countdown</button>
+      <p>Or press the space bar</p>
+    </div>
+    <div class="show-bar" id="showBar" role="toolbar" aria-label="Display controls">
+      <button class="btn glass" type="button" id="fsBtn">Full screen <kbd>F</kbd></button>
+      <button class="btn glass" type="button" id="playBtn" hidden>Pause <kbd>Space</kbd></button>
+      <button class="btn glass" type="button" id="restartBtn" hidden>Restart <kbd>R</kbd></button>
+      <button class="btn glass" type="button" id="soundBtn" hidden>Turn on sound</button>
+      <a class="btn glass" id="editCopy" href="./">Edit a copy</a>
+    </div>
+  </div>
+
+  <div id="errorView" class="error-view" hidden>
+    <div class="error-card">
+      <h1>This link didn't open</h1>
+      <p id="errorText">The link may be cut off or changed. Ask for the link again, or make your own countdown.</p>
+      <a class="btn primary" href="./">Make a countdown</a>
+    </div>
+  </div>
+
+  <!-- About -->
+  <dialog id="aboutDlg" class="dlg" aria-labelledby="aboutTitle">
+    <form method="dialog" class="dlg-body">
+      <div class="studio-logo small" data-placeholder="third-heaven-studios-logo">Third Heaven Studios</div>
+      <h2 id="aboutTitle">Kairos Countdown</h2>
+      <p class="muted">Version <span id="verText"></span></p>
+      <p>A free countdown for churches. Your settings live inside the link, so nothing is stored on a server and no account is needed.</p>
+      <p>Made by Third Heaven Studios.</p>
+      <p class="muted small">Fonts are used under the SIL Open Font License. See the <a href="https://github.com/hbuhrmanlll/church-countdown" target="_blank" rel="noopener noreferrer">project page</a> for details.</p>
+      <p class="muted small">&copy; <span id="yearText"></span> Third Heaven Studios</p>
+      <p class="update-line" id="updateLine" aria-live="polite"></p>
+      <div class="dlg-actions">
+        <button class="btn ghost" type="button" id="updateBtn">Check for updates</button>
+        <button class="btn primary" value="close">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+    <span id="toastText"></span>
+    <button type="button" class="toast-action" id="toastAction" hidden></button>
+  </div>
+</body>
+</html>
